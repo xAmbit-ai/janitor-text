@@ -139,6 +139,18 @@ fn push_cleaned_text(d: &mut Vec<String>, txt: String) {
     d.push(txt)
 }
 
+pub fn is_special_punctuation(txt: &str) -> bool {
+    if txt.chars().count() != 1 {
+        return false
+    }
+
+    let c = txt.next().unwrap();
+    
+    c == '.' || c == '!' || c == '?' || c == ',' || c == ';' || c == '(' || c == ')' ||
+    c == '<' || c == '>' || c == '$' || c == '&' || c == '\'' || c == '"' ||
+    c == ':' || c.is_whitespace()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
