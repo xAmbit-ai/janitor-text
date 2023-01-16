@@ -25,7 +25,7 @@ fn parse_html(s: &str) -> String {
     let mut texts = vec![];
     parse_node(&node, &mut texts);
 
-    texts.join(" [SEP] ")
+    texts.join(" . ")
 }
 
 fn parse_node(node: &Handle, texts: &mut Vec<String>) -> String {
@@ -72,10 +72,17 @@ fn parse_node(node: &Handle, texts: &mut Vec<String>) -> String {
 pub fn clean_text(input: &str) -> Vec<String> {
     let mut text = Vec::new();
     let mut last = String::new();
+    let mut lastsplchar = ' ';
 
     let mut escaped = false;
 
     for c in input.chars() {
+        // handelling consecutive punctuations
+        if c.is_ascii_punctuation() && c == lastsplchar {
+            continue;
+        }
+        lastsplchar = c;
+
         if c.is_whitespace() {
             if !last.is_empty() {
                 push_cleaned_text(&mut text, last.clone());
