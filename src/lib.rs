@@ -1,12 +1,15 @@
 use std::io::Cursor;
 
 use html5ever::{parse_document, tendril::TendrilSink, tree_builder::TreeSink};
-use markup5ever_rcdom::{RcDom, Handle, NodeData};
+use markup5ever_rcdom::{Handle, NodeData, RcDom};
 
 pub fn clean_text_with_html(text: &str) -> Vec<String> {
-    let rgx = regex::Regex::new(r"(\{(.|\n|\r\r)*\})|(<code>(.|\n|\r\r)*</code>)|(\?php(.|\n)?)").unwrap();
+    let rgx = regex::Regex::new(r"(\{(.|\n|\r\r)*\})|(<code>(.|\n|\r\r)*</code>)|(\?php(.|\n)?)")
+        .unwrap();
     let text = text.to_owned();
-    let txt = rgx.replace_all(&parse_html(&text), "Section contained code.").to_string();
+    let txt = rgx
+        .replace_all(&parse_html(&text), "Section contained code.")
+        .to_string();
 
     clean_text(&txt)
 }
@@ -21,7 +24,7 @@ fn parse_html(s: &str) -> String {
     let node = dom.get_document();
     let mut texts = vec![];
     parse_node(&node, &mut texts);
-    
+
     texts.join(" [SEP] ")
 }
 
@@ -33,23 +36,26 @@ fn parse_node(node: &Handle, texts: &mut Vec<String>) -> String {
             if !txt.is_empty() {
                 texts.push(txt);
             }
-        },
+        }
 
-        NodeData::Comment { ref contents } => { 
+        NodeData::Comment { ref contents } => {
             let txt = contents.trim().escape_default().to_string();
             if !txt.is_empty() {
                 texts.push(txt);
-            }},
+            }
+        }
 
         NodeData::Element {
             ref name,
             // ref attrs,
             ..
         } => {
-            if name.local.as_bytes() == "pre".as_bytes() || name.local.as_bytes() == "code".as_bytes() {
+            if name.local.as_bytes() == "pre".as_bytes()
+                || name.local.as_bytes() == "code".as_bytes()
+            {
                 return "code".to_string();
             }
-        },
+        }
 
         NodeData::ProcessingInstruction { .. } => unreachable!(),
         _ => {}
@@ -59,7 +65,7 @@ fn parse_node(node: &Handle, texts: &mut Vec<String>) -> String {
         // walk(indent + 4, child);
         parse_node(child, texts);
     }
-    
+
     "".to_string()
 }
 
@@ -86,7 +92,7 @@ pub fn clean_text(input: &str) -> Vec<String> {
             escaped = true;
             continue;
         }
-        
+
         if escaped {
             escaped = false;
             if c == 'n' || c == 't' || c == 'r' {
@@ -98,7 +104,19 @@ pub fn clean_text(input: &str) -> Vec<String> {
             }
         }
 
-        if c == '!' || c == '?' || c == ',' || c == ';' || c == '(' || c == ')' || c == '<' || c == '>' || c == '$' || c == '&' || c == '\'' || c == '"' {
+        if c == '!'
+            || c == '?'
+            || c == ','
+            || c == ';'
+            || c == '('
+            || c == ')'
+            || c == '<'
+            || c == '>'
+            || c == '$'
+            || c == '&'
+            || c == '\''
+            || c == '"'
+        {
             if !last.is_empty() {
                 push_cleaned_text(&mut text, last.trim().to_owned());
                 last = String::new();
@@ -108,16 +126,14 @@ pub fn clean_text(input: &str) -> Vec<String> {
             continue;
         }
 
-        if c == ':' || c == '.' {
-            if !last.starts_with("http") {
-                if !last.is_empty() {
-                    push_cleaned_text(&mut text, last.trim().to_owned());
-                    last = String::new();
-                }
-
-                push_cleaned_text(&mut text, c.to_string());
-                continue;
+        if (c == ':' || c == '.') && !last.starts_with("http") {
+            if !last.is_empty() {
+                push_cleaned_text(&mut text, last.trim().to_owned());
+                last = String::new();
             }
+
+            push_cleaned_text(&mut text, c.to_string());
+            continue;
         }
 
         last.push(c);
@@ -133,7 +149,7 @@ pub fn clean_text(input: &str) -> Vec<String> {
 fn push_cleaned_text(d: &mut Vec<String>, txt: String) {
     if txt.starts_with("http://") || txt.starts_with("https://") {
         d.push("link".to_string());
-        return
+        return;
     }
 
     d.push(txt)
@@ -141,14 +157,26 @@ fn push_cleaned_text(d: &mut Vec<String>, txt: String) {
 
 pub fn is_special_punctuation(txt: &str) -> bool {
     if txt.chars().count() != 1 {
-        return false
+        return false;
     }
 
-    let c = txt.next().unwrap();
-    
-    c == '.' || c == '!' || c == '?' || c == ',' || c == ';' || c == '(' || c == ')' ||
-    c == '<' || c == '>' || c == '$' || c == '&' || c == '\'' || c == '"' ||
-    c == ':' || c.is_whitespace()
+    let c = txt.chars().next().unwrap();
+
+    c == '.'
+        || c == '!'
+        || c == '?'
+        || c == ','
+        || c == ';'
+        || c == '('
+        || c == ')'
+        || c == '<'
+        || c == '>'
+        || c == '$'
+        || c == '&'
+        || c == '\''
+        || c == '"'
+        || c == ':'
+        || c.is_whitespace()
 }
 
 #[cfg(test)]
@@ -220,7 +248,7 @@ mod tests {
         "#;
 
         let res = clean_text_with_html(txt);
-        
+
         println!("{res:?}");
         // assert_eq!(res, )
     }
