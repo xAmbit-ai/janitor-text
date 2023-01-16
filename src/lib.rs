@@ -116,6 +116,8 @@ pub fn clean_text(input: &str) -> Vec<String> {
             || c == '&'
             || c == '\''
             || c == '"'
+            || c == '['
+            || c == ']'
         {
             if !last.is_empty() {
                 push_cleaned_text(&mut text, last.trim().to_owned());
