@@ -156,9 +156,16 @@ pub fn clean_text(input: &str) -> Vec<String> {
 }
 
 fn push_cleaned_text(d: &mut Vec<String>, txt: String) {
-    if txt.starts_with("http://") || txt.starts_with("https://") {
+    if txt.starts_with("http:/") || txt.starts_with("https:/") {
         d.push("link".to_string());
         return;
+    }
+
+    if let Some(p) = d.last() {
+        // ignoring if last two words are exactly the same
+        if p == &txt {
+            return;
+        }
     }
 
     d.push(txt)
