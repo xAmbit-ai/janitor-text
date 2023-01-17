@@ -315,8 +315,8 @@ fn push_cleaned_text(d: &mut Vec<String>, txt: String) -> Option<bool> {
     }
     
     if txt.chars().count() > 32 {
-        println!("Replacing with random: {txt}");
-        txt = "random-word";
+        // println!("Replacing with random: {txt}");
+        txt = "long-text";
     }
 
     d.push(txt.to_owned());
